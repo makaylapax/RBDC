@@ -1,10 +1,159 @@
 ---
-title: "Work"
-output: html_document
+output: 
+  html_document:
+    code_folding: hide
+    fig_width: 8
+    fig_height: 6
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+library(readxl)
+library(tidyverse)
+library(mosaic)
+library(ggplot2)
+library(pander)
+library(plotly)
+library(DT)
+library(stringr)
+library(knitr)
+library(kableExtra)
+
+goal <- read_xlsx("2018 Dashboard.xlsx", sheet = 1, skip = 4)
+student <- read_xlsx("2018 Dashboard.xlsx", sheet = 2) %>%
+  filter(!is.na(`First Name`)) %>%
+  mutate(sem = str_trim(str_to_upper(.$`Hiring Semester`)))
+project <- read_xlsx("2018 Dashboard.xlsx", sheet = 3) %>%
+  filter(!is.na(`Company Name`))
+revenue <- read_xlsx("2018 Dashboard.xlsx", sheet = 4) %>%
+  filter(`Project Name` != 0)
 ```
 
-Stuff I share with you.
+![](image.png)
+----
+
+Date: March 8, 2018
+
+----
+
+# Student Goal {.tabset .tabset-fade .tabset-pills}
+
+## Graphical View
+
+```{r echo=FALSE}
+students <- 
+  goal %>%
+  ggplot() +
+  geom_col(aes(x = `X__1`, y = `Student Goal`), fill = "grey", color = "black") +
+  geom_col(aes(x = `X__1`, y = `Student Actual`, fill = `X__1`), show.legend = FALSE, color = "black") +
+  scale_fill_brewer(palette = "Set2" ) +
+  theme_bw() +
+  labs(
+    title = "Student Progress",
+    x = "Project Types",
+    y = ""
+  )
+
+students <- ggplotly(students, tooltip = c("`Student Actual`", "`Student Goal`"))
+hide_legend(students)
+```
+
+
+----
+
+## Table View
+
+
+```{r echo=FALSE}
+datatable(student[c(1,2,3,4,7,9)])
+```
+
+----
+
+## Semester Count
+
+```{r}
+kable(table(student$`Project Type Assignment`, student$sem), "html") %>%
+  kable_styling(c("striped", "bordered"), font_size = 27) %>%
+  add_header_above(c("2018 Student Overview" = 2))
+```
+
+----
+
+# Project Goal {.tabset .tabset-fade .tabset-pills}
+
+## Graphical View
+```{r echo=FALSE}
+
+projects <- 
+  goal %>%
+  ggplot() +
+  geom_col(aes(x = `X__1`, y = `Project Goal`), fill = "grey", color = "black") +
+  geom_col(aes(x = `X__1`, y = Projects, fill = `X__1`), color = "black", show.legend = FALSE) +
+  scale_fill_brewer( palette = "Set2" ) +
+  theme_bw() +
+  labs(
+    title = "Project Progress",
+    x = "Project Types",
+    y = ""
+  ) +
+    theme(axis.text.x = element_text(hjust=2))
+
+projects <- ggplotly(projects, tooltip = c("`Project Goal`", "Projects"))
+hide_legend(projects)
+```
+
+----
+
+## Table View
+```{r echo=FALSE}
+datatable(project[c(1,4,5,21)])
+```
+
+----
+
+## Semester Count
+
+```{r}
+kable(table(project$`Project Type`, project$Semester), "html") %>%
+  kable_styling(c("striped"), font_size = 27, full_width = TRUE) %>%
+  add_header_above(c("", "Semesters" = 2)) %>%
+  add_header_above(c("2018 Student Overview" = 3))
+```
+
+----
+
+# Revenue Goal {.tabset .tabset-fade .tabset-pills}
+
+## Graphical View
+
+```{r echo=FALSE}
+rev <- 
+  goal %>%
+  ggplot() +
+  geom_col(aes(x = `X__1`, y = `Revenue Goal`), fill = "grey", color = "black") +
+  geom_col(aes(x = `X__1`, y = Revenue, fill = `X__1`), show.legend = FALSE, color = "black") +
+  scale_fill_brewer(palette = "Set2" ) +
+  theme_bw() +
+  labs(
+    title = "Revenue Progress",
+    x = "Project Types",
+    y = ""
+  ) +
+  theme(axis.text.x = element_text(angle = 15, hjust=1))
+
+rev <- ggplotly(rev, tooltip = c("Revenue", "`Revenue Goal`")) %>% layout(margin = list(l=50))
+hide_legend(rev)
+```
+
+----
+
+## Table View
+```{r echo=FALSE}
+datatable(revenue[c(1,7)])
+```
+
